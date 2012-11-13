@@ -3,12 +3,16 @@ package com.meidan.shoppinglist;
 import java.util.ArrayList;
 
 import android.app.ExpandableListActivity;
+import android.app.ListActivity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
+import android.widget.ArrayAdapter;
 
-public class MainActivity extends ExpandableListActivity {
+public class MainActivity extends ListActivity {
 	
 	private final String DB_NAME = "ShoppingDbName"; 
 	private final String TABLE_NAME = "ShoppingTableName";
@@ -21,15 +25,16 @@ public class MainActivity extends ExpandableListActivity {
         ArrayList<String> results = new ArrayList<String>();
         try {
         	shoppingDB = this.openOrCreateDatabase(DB_NAME, MODE_PRIVATE, null);
-        	shoppingDB.execSQL("CREATE TABLE IF NOT EXIST "  
+        	shoppingDB.execSQL("CREATE TABLE IF NOT EXISTS "  
         						+ TABLE_NAME	
-        						+ "(Name VARCHAR NOT NULL " 
-        						+ "Barcode INT UNIQUE "
+        						+ "(Name VARCHAR NOT NULL, " 
+        						+ "Barcode INT UNIQUE, "
         						+ "Price REAL);");
         	insertExampleToDb();
         	
-        	Cursor c = shoppingDB.rawQuery("SELECT ALL " 
-        									+ " FROM " + TABLE_NAME, null);
+        	Cursor c = shoppingDB.rawQuery("SELECT * "
+        									+ "FROM " + TABLE_NAME , null);
+        	
         	if (c != null){
         		if(c.moveToFirst()) {
         			do {
@@ -41,10 +46,19 @@ public class MainActivity extends ExpandableListActivity {
         		}
         	}
         	
-        	
+        setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, results));	
         						
+        }catch(SQLiteException e){
+        	//Log.e(getClass().getSimpleName(), "create/Open the database problem");
+        	Log.e(getClass().getSimpleName(), e.getMessage());
+        }finally{
+        	if (shoppingDB != null)
+        		shoppingDB.delete(TABLE_NAME, null, null);
+        		Log.d(getClass().getSimpleName(), "Table Deleted!");
+        		shoppingDB.close();
         }
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
+        
     }
 
 
@@ -57,10 +71,15 @@ public class MainActivity extends ExpandableListActivity {
 	
 	
     private void insertExampleToDb() {
-    	String hebName = "קוטג' 5%";
-		shoppingDB.execSQL("INSERT TO " 
+    	String hebName1 = "קוטג";
+    	String hebName2 = "חלב";
+		shoppingDB.execSQL("INSERT INTO " 
 							+ TABLE_NAME
-							+ " Values("+hebName+", 121212, 2.53);");
+							+ " VALUES('"+hebName1+"', 121212, 2.53);");
+		
+		shoppingDB.execSQL("INSERT INTO " 
+							+ TABLE_NAME
+							+ " VALUES('"+hebName2+"', 3333333, 6.69);");
 		
 		
 	}
